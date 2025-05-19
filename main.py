@@ -1,22 +1,23 @@
 import pygame
 
 pygame.init()
-screen = pygame.display.set_mode((1280, 720))
+WINDOW_WIDTH, WINDOW_HEIGHT = 1280, 720
+display_suface = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
+pygame.display.set_caption("Space Shooter")
 clock = pygame.time.Clock()
 running = True
-# delta time, used for frame rate independent movement
 dt = 0
 
-playerPos = pygame.Vector2(screen.get_width() / 2, screen.get_height() / 2)
+playerPos = pygame.Vector2(display_suface.get_width() / 2, display_suface.get_height() / 2)
 
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
 
-    screen.fill((0, 0, 0))
+    display_suface.fill((0, 0, 0))
 
-    pygame.draw.circle(screen, (255, 0, 0), playerPos, 40)
+    pygame.draw.circle(display_suface, (255, 0, 0), playerPos, 40)
 
     keys = pygame.key.get_pressed()
     if keys[pygame.K_w]:
