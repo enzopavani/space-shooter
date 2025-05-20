@@ -8,13 +8,13 @@ displaySurface = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
 pygame.display.set_caption("Space Shooter")
 clock = pygame.time.Clock()
 running = True
-gameFPS = 24
+gameFPS = 120
 
 playerSurface = pygame.image.load(join("spaceShooterResources", "images", "player.png")).convert_alpha()
 playerPosition = pygame.Vector2(displaySurface.get_width() / 2, displaySurface.get_height() / 2)
 playerRect = playerSurface.get_frect(center=playerPosition)
 playerDirection = pygame.Vector2(2, -1)
-playerSpeed = 10
+playerSpeed = 300
 
 starSurface = pygame.image.load(join("spaceShooterResources", "images", "star.png")).convert_alpha()
 starPositions = [pygame.Vector2(randint(0, WINDOW_WIDTH), randint(0, WINDOW_HEIGHT)) for _ in range(20)]
@@ -28,7 +28,7 @@ laserPosition = pygame.Vector2(20 , displaySurface.get_height() - 20)
 laserRect = laserSurface.get_frect(bottomleft=laserPosition)
 
 while running:
-    clock.tick(gameFPS)
+    dt = clock.tick(gameFPS) / 1000
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
@@ -39,7 +39,12 @@ while running:
     displaySurface.blit(meteorSurface, meteorRect)
     displaySurface.blit(laserSurface, laserRect)
 
-    playerRect.center += playerDirection * playerSpeed
+    # Basic pygame rect movement
+    playerRect.center += playerDirection * playerSpeed * dt
+    if playerRect.left < 0 or playerRect.right > displaySurface.get_width():
+        playerDirection.x *= -1
+    if playerRect.top < 0 or playerRect.bottom > displaySurface.get_height():
+        playerDirection.y *= -1
     
     displaySurface.blit(playerSurface, playerRect)
     
