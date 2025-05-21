@@ -20,6 +20,12 @@ class Player(pygame.sprite.Sprite):
             print("Fire laser!")
         self.rect.center += self.speed * self.direction * dt
 
+class Star(pygame.sprite.Sprite):
+    def __init__(self, group, surface):
+        super().__init__(group)
+        self.image = surface
+        self.rect = self.image.get_frect(center=pygame.Vector2(randint(0, WINDOW_WIDTH), randint(0, WINDOW_HEIGHT)))
+
 pygame.init()
 WINDOW_WIDTH, WINDOW_HEIGHT = 1280, 720
 displaySurface = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
@@ -29,7 +35,6 @@ running = True
 gameFPS = 120
 
 starSurface = pygame.image.load(join("spaceShooterResources", "images", "star.png")).convert_alpha()
-starPositions = [pygame.Vector2(randint(0, WINDOW_WIDTH), randint(0, WINDOW_HEIGHT)) for _ in range(20)]
 
 meteorSurface = pygame.image.load(join("spaceShooterResources", "images", "meteor.png")).convert_alpha()
 meteorPosition = pygame.Vector2(displaySurface.get_width() / 2, displaySurface.get_height() / 2)
@@ -40,6 +45,8 @@ laserPosition = pygame.Vector2(20 , displaySurface.get_height() - 20)
 laserRect = laserSurface.get_frect(bottomleft=laserPosition)
 
 allSprites = pygame.sprite.Group()
+for _ in range(20):
+    Star(allSprites, starSurface)
 player = Player(allSprites)
 
 while running:
@@ -53,10 +60,6 @@ while running:
     allSprites.update(dt)
 
     displaySurface.fill('lightblue')
-    for position in starPositions:
-        displaySurface.blit(starSurface, position)
-    displaySurface.blit(meteorSurface, meteorRect)
-    displaySurface.blit(laserSurface, laserRect)
     allSprites.draw(displaySurface)
 
     pygame.display.flip()
