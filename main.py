@@ -13,7 +13,7 @@ gameFPS = 120
 playerSurface = pygame.image.load(join("spaceShooterResources", "images", "player.png")).convert_alpha()
 playerPosition = pygame.Vector2(displaySurface.get_width() / 2, displaySurface.get_height() / 2)
 playerRect = playerSurface.get_frect(center=playerPosition)
-playerDirection = pygame.Vector2(2, -1)
+playerDirection = pygame.Vector2()
 playerSpeed = 300
 
 starSurface = pygame.image.load(join("spaceShooterResources", "images", "star.png")).convert_alpha()
@@ -32,19 +32,29 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+        if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+            running = False
+        # Mouse Movement
+        # if event.type == pygame.MOUSEMOTION:
+        #   playerRect.center = event.pos
+
+    keys = pygame.key.get_pressed()
+    recentKeys = pygame.key.get_just_pressed()
+    # keys[] returns boolean, 1 true, 0 false
+    playerDirection.x = int(keys[pygame.K_d]) - int(keys[pygame.K_a])
+    playerDirection.y = int(keys[pygame.K_s]) - int(keys[pygame.K_w])
+    # if playerDirection is not (0, 0) normalize the vector
+    playerDirection = playerDirection.normalize() if playerDirection else playerDirection
+    if recentKeys[pygame.K_SPACE]:
+        print("Fire laser!")
+
+    playerRect.center += playerDirection * playerSpeed * dt
 
     displaySurface.fill('lightblue')
     for position in starPositions:
         displaySurface.blit(starSurface, position)
     displaySurface.blit(meteorSurface, meteorRect)
     displaySurface.blit(laserSurface, laserRect)
-
-    # Basic pygame rect movement
-    playerRect.center += playerDirection * playerSpeed * dt
-    if playerRect.left < 0 or playerRect.right > displaySurface.get_width():
-        playerDirection.x *= -1
-    if playerRect.top < 0 or playerRect.bottom > displaySurface.get_height():
-        playerDirection.y *= -1
     
     displaySurface.blit(playerSurface, playerRect)
     
