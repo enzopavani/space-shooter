@@ -28,7 +28,7 @@ class Player(pygame.sprite.Sprite):
         self.direction = self.direction.normalize() if self.direction else self.direction
         self.rect.center += self.speed * self.direction * dt
         if recentKeys[pygame.K_SPACE] and self.canShoot:
-            print("Fire laser!")
+            Laser(allSprites, laserSurface, self.rect.midtop)
             self.canShoot = False
             self.laserShootTime = pygame.time.get_ticks()
         self.laserTimer()
@@ -40,6 +40,18 @@ class Star(pygame.sprite.Sprite):
         self.image = surface
         self.rect = self.image.get_frect(center=pygame.Vector2(randint(0, WINDOW_WIDTH), randint(0, WINDOW_HEIGHT)))
 
+class Laser(pygame.sprite.Sprite):
+    def __init__(self, group, surface, position):
+        super().__init__(group)
+        self.image = surface
+        self.rect = self.image.get_frect(midbottom=position)
+        self.speed = 500
+
+    def update(self, dt):
+        self.rect.centery -= self.speed * dt
+        if self.rect.bottom < 0:
+            self.kill()
+
 pygame.init()
 WINDOW_WIDTH, WINDOW_HEIGHT = 1280, 720
 displaySurface = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
@@ -49,14 +61,8 @@ running = True
 gameFPS = 120
 
 starSurface = pygame.image.load(join("spaceShooterResources", "images", "star.png")).convert_alpha()
-
 meteorSurface = pygame.image.load(join("spaceShooterResources", "images", "meteor.png")).convert_alpha()
-meteorPosition = pygame.Vector2(displaySurface.get_width() / 2, displaySurface.get_height() / 2)
-meteorRect = meteorSurface.get_frect(center=meteorPosition)
-
 laserSurface = pygame.image.load(join("spaceShooterResources", "images", "laser.png")).convert_alpha()
-laserPosition = pygame.Vector2(20 , displaySurface.get_height() - 20)
-laserRect = laserSurface.get_frect(bottomleft=laserPosition)
 
 allSprites = pygame.sprite.Group()
 for _ in range(20):
