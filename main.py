@@ -1,6 +1,6 @@
 import pygame
 from os.path import join
-from random import randint
+from random import randint, uniform
 
 class Player(pygame.sprite.Sprite):
     def __init__(self, group):
@@ -33,7 +33,6 @@ class Player(pygame.sprite.Sprite):
             self.laserShootTime = pygame.time.get_ticks()
         self.laserTimer()
         
-
 class Star(pygame.sprite.Sprite):
     def __init__(self, group, surface):
         super().__init__(group)
@@ -52,13 +51,28 @@ class Laser(pygame.sprite.Sprite):
         if self.rect.bottom < 0:
             self.kill()
 
+class Meteor(pygame.sprite.Sprite):
+    def __init__(self, group, surface, position):
+        super().__init__(group)
+        self.image = surface
+        self.rect = self.image.get_frect(center=position)
+        self.direction = pygame.Vector2((uniform(-0.5, 0.5), 1))
+        self.speed = randint(600, 700)
+        self.birthTime = pygame.time.get_ticks()
+        self.lifeTime = 2000
+
+    def update(self, dt):
+        self.rect.center += self.speed * self.direction * dt
+        if pygame.time.get_ticks() - self.birthTime > self.lifeTime:
+            self.kill()
+
 pygame.init()
 WINDOW_WIDTH, WINDOW_HEIGHT = 1280, 720
 displaySurface = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
 pygame.display.set_caption("Space Shooter")
 clock = pygame.time.Clock()
 running = True
-gameFPS = 120
+gameFPS = 60
 
 starSurface = pygame.image.load(join("spaceShooterResources", "images", "star.png")).convert_alpha()
 meteorSurface = pygame.image.load(join("spaceShooterResources", "images", "meteor.png")).convert_alpha()
@@ -80,7 +94,7 @@ while running:
         if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
             running = False
         if event.type == meteorEvent:
-            print("Create meteor")
+            Meteor(allSprites, meteorSurface, (randint(0, WINDOW_WIDTH), randint(-150, -50)))
     
     allSprites.update(dt)
 
