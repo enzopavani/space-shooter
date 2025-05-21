@@ -9,6 +9,16 @@ class Player(pygame.sprite.Sprite):
         self.rect = self.image.get_frect(center=(WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2))
         self.direction = pygame.Vector2()
         self.speed = 500
+
+        self.canShoot = True
+        self.laserShootTime = 0
+        self.cooldownDuration = 400
+
+    def laserTimer(self):
+        if not self.canShoot:
+            currentTime = pygame.time.get_ticks()
+            if currentTime - self.laserShootTime >= self.cooldownDuration:
+                self.canShoot = True
     
     def update(self, dt):
         keys = pygame.key.get_pressed()
@@ -16,9 +26,13 @@ class Player(pygame.sprite.Sprite):
         self.direction.x = int(keys[pygame.K_d]) - int(keys[pygame.K_a]) 
         self.direction.y = int(keys[pygame.K_s]) - int(keys[pygame.K_w]) 
         self.direction = self.direction.normalize() if self.direction else self.direction
-        if recentKeys[pygame.K_SPACE]:
-            print("Fire laser!")
         self.rect.center += self.speed * self.direction * dt
+        if recentKeys[pygame.K_SPACE] and self.canShoot:
+            print("Fire laser!")
+            self.canShoot = False
+            self.laserShootTime = pygame.time.get_ticks()
+        self.laserTimer()
+        
 
 class Star(pygame.sprite.Sprite):
     def __init__(self, group, surface):
@@ -49,6 +63,9 @@ for _ in range(20):
     Star(allSprites, starSurface)
 player = Player(allSprites)
 
+meteorEvent = pygame.event.custom_type()
+pygame.time.set_timer(meteorEvent, 500)
+
 while running:
     dt = clock.tick(gameFPS) / 1000
     for event in pygame.event.get():
@@ -56,6 +73,8 @@ while running:
             running = False
         if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
             running = False
+        if event.type == meteorEvent:
+            print("Create meteor")
     
     allSprites.update(dt)
 
