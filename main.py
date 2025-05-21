@@ -2,6 +2,24 @@ import pygame
 from os.path import join
 from random import randint
 
+class Player(pygame.sprite.Sprite):
+    def __init__(self, group):
+        super().__init__(group)
+        self.image = pygame.image.load(join("spaceShooterResources", "images", "player.png")).convert_alpha()
+        self.rect = self.image.get_frect(center=(WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2))
+        self.direction = pygame.Vector2()
+        self.speed = 500
+    
+    def update(self, dt):
+        keys = pygame.key.get_pressed()
+        recentKeys = pygame.key.get_just_pressed()
+        self.direction.x = int(keys[pygame.K_d]) - int(keys[pygame.K_a]) 
+        self.direction.y = int(keys[pygame.K_s]) - int(keys[pygame.K_w]) 
+        self.direction = self.direction.normalize() if self.direction else self.direction
+        if recentKeys[pygame.K_SPACE]:
+            print("Fire laser!")
+        self.rect.center += self.speed * self.direction * dt
+
 pygame.init()
 WINDOW_WIDTH, WINDOW_HEIGHT = 1280, 720
 displaySurface = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
@@ -9,12 +27,6 @@ pygame.display.set_caption("Space Shooter")
 clock = pygame.time.Clock()
 running = True
 gameFPS = 120
-
-playerSurface = pygame.image.load(join("spaceShooterResources", "images", "player.png")).convert_alpha()
-playerPosition = pygame.Vector2(displaySurface.get_width() / 2, displaySurface.get_height() / 2)
-playerRect = playerSurface.get_frect(center=playerPosition)
-playerDirection = pygame.Vector2()
-playerSpeed = 300
 
 starSurface = pygame.image.load(join("spaceShooterResources", "images", "star.png")).convert_alpha()
 starPositions = [pygame.Vector2(randint(0, WINDOW_WIDTH), randint(0, WINDOW_HEIGHT)) for _ in range(20)]
@@ -27,6 +39,9 @@ laserSurface = pygame.image.load(join("spaceShooterResources", "images", "laser.
 laserPosition = pygame.Vector2(20 , displaySurface.get_height() - 20)
 laserRect = laserSurface.get_frect(bottomleft=laserPosition)
 
+allSprites = pygame.sprite.Group()
+player = Player(allSprites)
+
 while running:
     dt = clock.tick(gameFPS) / 1000
     for event in pygame.event.get():
@@ -34,30 +49,16 @@ while running:
             running = False
         if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
             running = False
-        # Mouse Movement
-        # if event.type == pygame.MOUSEMOTION:
-        #   playerRect.center = event.pos
-
-    keys = pygame.key.get_pressed()
-    recentKeys = pygame.key.get_just_pressed()
-    # keys[] returns boolean, 1 true, 0 false
-    playerDirection.x = int(keys[pygame.K_d]) - int(keys[pygame.K_a])
-    playerDirection.y = int(keys[pygame.K_s]) - int(keys[pygame.K_w])
-    # if playerDirection is not (0, 0) normalize the vector
-    playerDirection = playerDirection.normalize() if playerDirection else playerDirection
-    if recentKeys[pygame.K_SPACE]:
-        print("Fire laser!")
-
-    playerRect.center += playerDirection * playerSpeed * dt
+    
+    allSprites.update(dt)
 
     displaySurface.fill('lightblue')
     for position in starPositions:
         displaySurface.blit(starSurface, position)
     displaySurface.blit(meteorSurface, meteorRect)
     displaySurface.blit(laserSurface, laserRect)
-    
-    displaySurface.blit(playerSurface, playerRect)
-    
+    allSprites.draw(displaySurface)
+
     pygame.display.flip()
 
 pygame.quit()
