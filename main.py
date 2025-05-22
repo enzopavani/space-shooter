@@ -75,9 +75,10 @@ def collisions():
             laser.kill()
 
 def displayScore():
-    currentTime = pygame.time.get_ticks() // 100
+    currentTime = pygame.time.get_ticks() // 20
     textSurface = font.render(str(currentTime), True, (200, 200, 200))
     textRect = textSurface.get_frect(midbottom=(WINDOW_WIDTH / 2, WINDOW_HEIGHT - 50))
+    pygame.draw.rect(displaySurface, (250, 250, 250), textRect.inflate(20, 10).move(0, -8), 5, 10)
     displaySurface.blit(textSurface, textRect)
 
 pygame.init()
