@@ -28,7 +28,7 @@ class Player(pygame.sprite.Sprite):
         self.direction = self.direction.normalize() if self.direction else self.direction
         self.rect.center += self.speed * self.direction * dt
         if recentKeys[pygame.K_SPACE] and self.canShoot:
-            Laser(allSprites, laserSurface, self.rect.midtop)
+            Laser((allSprites, laserSprites), laserSurface, self.rect.midtop)
             self.canShoot = False
             self.laserShootTime = pygame.time.get_ticks()
         self.laserTimer()
@@ -66,6 +66,14 @@ class Meteor(pygame.sprite.Sprite):
         if pygame.time.get_ticks() - self.birthTime > self.lifeTime:
             self.kill()
 
+def collisions():
+    global running
+    if pygame.sprite.spritecollide(player, meteorSprites, True):
+        running = False
+    for laser in laserSprites:
+        if pygame.sprite.spritecollide(laser, meteorSprites, True):
+            laser.kill()
+
 pygame.init()
 WINDOW_WIDTH, WINDOW_HEIGHT = 1280, 720
 displaySurface = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
@@ -79,6 +87,8 @@ meteorSurface = pygame.image.load(join("spaceShooterResources", "images", "meteo
 laserSurface = pygame.image.load(join("spaceShooterResources", "images", "laser.png")).convert_alpha()
 
 allSprites = pygame.sprite.Group()
+meteorSprites = pygame.sprite.Group()
+laserSprites = pygame.sprite.Group()
 for _ in range(20):
     Star(allSprites, starSurface)
 player = Player(allSprites)
@@ -94,12 +104,13 @@ while running:
         if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
             running = False
         if event.type == meteorEvent:
-            Meteor(allSprites, meteorSurface, (randint(0, WINDOW_WIDTH), randint(-150, -50)))
+            Meteor((allSprites, meteorSprites), meteorSurface, (randint(0, WINDOW_WIDTH), randint(-150, -50)))
     
     allSprites.update(dt)
 
     displaySurface.fill('lightblue')
     allSprites.draw(displaySurface)
+    collisions()
 
     pygame.display.flip()
 
