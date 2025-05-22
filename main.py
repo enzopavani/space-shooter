@@ -74,6 +74,12 @@ def collisions():
         if pygame.sprite.spritecollide(laser, meteorSprites, True):
             laser.kill()
 
+def displayScore():
+    currentTime = pygame.time.get_ticks() // 100
+    textSurface = font.render(str(currentTime), True, (200, 200, 200))
+    textRect = textSurface.get_frect(midbottom=(WINDOW_WIDTH / 2, WINDOW_HEIGHT - 50))
+    displaySurface.blit(textSurface, textRect)
+
 pygame.init()
 WINDOW_WIDTH, WINDOW_HEIGHT = 1280, 720
 displaySurface = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
@@ -85,6 +91,8 @@ gameFPS = 60
 starSurface = pygame.image.load(join("spaceShooterResources", "images", "star.png")).convert_alpha()
 meteorSurface = pygame.image.load(join("spaceShooterResources", "images", "meteor.png")).convert_alpha()
 laserSurface = pygame.image.load(join("spaceShooterResources", "images", "laser.png")).convert_alpha()
+# dafont.com
+font = pygame.font.Font(join("spaceShooterResources", "images", "Oxanium-Bold.ttf"), 40)
 
 allSprites = pygame.sprite.Group()
 meteorSprites = pygame.sprite.Group()
@@ -107,10 +115,11 @@ while running:
             Meteor((allSprites, meteorSprites), meteorSurface, (randint(0, WINDOW_WIDTH), randint(-150, -50)))
     
     allSprites.update(dt)
-
-    displaySurface.fill('lightblue')
-    allSprites.draw(displaySurface)
     collisions()
+
+    displaySurface.fill("#3e005a")
+    allSprites.draw(displaySurface)
+    displayScore()
 
     pygame.display.flip()
 
