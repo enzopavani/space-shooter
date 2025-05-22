@@ -57,18 +57,24 @@ class Laser(pygame.sprite.Sprite):
 class Meteor(pygame.sprite.Sprite):
     def __init__(self, group, surface, position):
         super().__init__(group)
-        self.image = surface
+        self.originalSurface = surface
+        self.image = self.originalSurface
         self.rect = self.image.get_frect(center=position)
         self.direction = pygame.Vector2((uniform(-0.5, 0.5), 1))
         self.speed = randint(600, 700)
         self.birthTime = pygame.time.get_ticks()
         self.lifeTime = 2000
         self.mask = pygame.mask.from_surface(self.image)
+        self.rotationSpeed = randint(30, 100)
+        self.rotation = 0
 
     def update(self, dt):
         self.rect.center += self.speed * self.direction * dt
         if pygame.time.get_ticks() - self.birthTime > self.lifeTime:
             self.kill()
+        self.rotation += self.rotationSpeed * dt
+        self.image = pygame.transform.rotozoom(self.originalSurface, self.rotation, 1)
+        self.rect = self.image.get_frect(center=self.rect.center)
 
 def collisions():
     global running
@@ -96,7 +102,6 @@ gameFPS = 60
 starSurface = pygame.image.load(join("spaceShooterResources", "images", "star.png")).convert_alpha()
 meteorSurface = pygame.image.load(join("spaceShooterResources", "images", "meteor.png")).convert_alpha()
 laserSurface = pygame.image.load(join("spaceShooterResources", "images", "laser.png")).convert_alpha()
-# dafont.com
 font = pygame.font.Font(join("spaceShooterResources", "images", "Oxanium-Bold.ttf"), 40)
 
 allSprites = pygame.sprite.Group()
