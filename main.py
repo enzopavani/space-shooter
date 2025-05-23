@@ -1,6 +1,7 @@
 import pygame
 from os.path import join
 from random import randint, uniform
+import csv
 
 class Player(pygame.sprite.Sprite):
     def __init__(self, group):
@@ -94,6 +95,11 @@ class AnimatedExplosion(pygame.sprite.Sprite):
         else:
             self.kill()
 
+class User():
+    def __init__(self, surface, rect):
+        self.surface = surface
+        self.rect = rect
+
 def collisions():
     global pause
     if pygame.sprite.spritecollide(player, meteorSprites, True, pygame.sprite.collide_mask):
@@ -115,12 +121,28 @@ def gameOver():
     global running
     gameOverSurface = font.render("GAME OVER!", True, "#ff0000")
     gameOverRect = gameOverSurface.get_frect(center=(WINDOW_WIDTH / 2, 150))
-    pygame.draw.rect(displaySurface, "#ffffff", gameOverRect.inflate(200, 500).move(0, 150), 3, 10)
+    pygame.draw.rect(displaySurface, "#ffffff", gameOverRect.inflate(200, 450).move(0, 180), 3, 10)
     displaySurface.blit(gameOverSurface, gameOverRect)
+    printLeaderboard()
     for event in pygame.event.get():
         if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
             running = False
 
+def printLeaderboard():
+    leaderboardSurface = font.render("LEADERBOARD:", True, "#ff0000")
+    leaderboardRect = leaderboardSurface.get_frect(center=(WINDOW_WIDTH / 2, 240))
+    displaySurface.blit(leaderboardSurface, leaderboardRect)
+    with open(join("leaderboard.csv"), newline="") as leaderboardFile:
+        reader = csv.reader(leaderboardFile)
+        i = 0
+        leaderboardMargin = 0
+        for data in reader:
+            leaderboardMargin += 30
+            userSurface = smallerFont.render(f"#{i + 1}. {data[0]} - {data[1]}", True, "#ffffff")
+            userRect = userSurface.get_frect(center=(WINDOW_WIDTH / 2, 250 + leaderboardMargin))
+            i += 1
+            displaySurface.blit(userSurface, userRect)
+        
 pygame.init()
 WINDOW_WIDTH, WINDOW_HEIGHT = 1280, 720
 displaySurface = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
@@ -134,6 +156,7 @@ starSurface = pygame.image.load(join("spaceShooterResources", "images", "star.pn
 meteorSurface = pygame.image.load(join("spaceShooterResources", "images", "meteor.png")).convert_alpha()
 laserSurface = pygame.image.load(join("spaceShooterResources", "images", "laser.png")).convert_alpha()
 font = pygame.font.Font(join("spaceShooterResources", "images", "Oxanium-Bold.ttf"), 40)
+smallerFont = pygame.font.Font(join("spaceShooterResources", "images", "Oxanium-Bold.ttf"), 25)
 explosionFrames = [pygame.image.load(join("spaceShooterResources", "images", "explosion", f"{i}.png")).convert_alpha() for i in range(21)]
 
 laserSound = pygame.mixer.Sound(join("spaceShooterResources", "audio", "laser.wav"))
