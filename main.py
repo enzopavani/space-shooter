@@ -95,20 +95,31 @@ class AnimatedExplosion(pygame.sprite.Sprite):
             self.kill()
 
 def collisions():
-    global running
+    global pause
     if pygame.sprite.spritecollide(player, meteorSprites, True, pygame.sprite.collide_mask):
-        running = False
+        player.kill()
+        pause = True
     for laser in laserSprites:
         if pygame.sprite.spritecollide(laser, meteorSprites, True):
             laser.kill()
             AnimatedExplosion(allSprites, explosionFrames, laser.rect.midtop)
 
 def displayScore():
-    currentTime = pygame.time.get_ticks() // 20
-    textSurface = font.render(str(currentTime), True, (200, 200, 200))
+    score = pygame.time.get_ticks() // 20
+    textSurface = font.render(str(score), True, "#c8c8c8")
     textRect = textSurface.get_frect(midbottom=(WINDOW_WIDTH / 2, WINDOW_HEIGHT - 50))
-    pygame.draw.rect(displaySurface, (250, 250, 250), textRect.inflate(20, 10).move(0, -8), 5, 10)
+    pygame.draw.rect(displaySurface, "#fafafa", textRect.inflate(20, 10).move(0, -8), 5, 10)
     displaySurface.blit(textSurface, textRect)
+
+def gameOver():
+    global running
+    gameOverSurface = font.render("GAME OVER!", True, "#ff0000")
+    gameOverRect = gameOverSurface.get_frect(center=(WINDOW_WIDTH / 2, 150))
+    pygame.draw.rect(displaySurface, "#ffffff", gameOverRect.inflate(200, 500).move(0, 150), 3, 10)
+    displaySurface.blit(gameOverSurface, gameOverRect)
+    for event in pygame.event.get():
+        if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+            running = False
 
 pygame.init()
 WINDOW_WIDTH, WINDOW_HEIGHT = 1280, 720
@@ -116,6 +127,7 @@ displaySurface = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
 pygame.display.set_caption("Space Shooter")
 clock = pygame.time.Clock()
 running = True
+pause = False
 gameFPS = 60
 
 starSurface = pygame.image.load(join("spaceShooterResources", "images", "star.png")).convert_alpha()
@@ -143,22 +155,24 @@ meteorEvent = pygame.event.custom_type()
 pygame.time.set_timer(meteorEvent, 500)
 
 while running:
-    dt = clock.tick(gameFPS) / 1000
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
-        if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-            running = False
-        if event.type == meteorEvent:
-            Meteor((allSprites, meteorSprites), meteorSurface, (randint(0, WINDOW_WIDTH), randint(-150, -50)))
-    
-    allSprites.update(dt)
-    collisions()
+    while not pause:
+        dt = clock.tick(gameFPS) / 1000
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            if event.type == meteorEvent:
+                Meteor((allSprites, meteorSprites), meteorSurface, (randint(0, WINDOW_WIDTH), randint(-150, -50)))
+        
+        allSprites.update(dt)
+        collisions()
 
-    displaySurface.fill("#3e005a")
-    allSprites.draw(displaySurface)
-    displayScore()
+        displaySurface.fill("#3e005a")
+        allSprites.draw(displaySurface)
+        displayScore()
 
+        pygame.display.flip()
+
+    gameOver()
     pygame.display.flip()
 
 pygame.quit()
