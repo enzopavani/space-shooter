@@ -10,12 +10,11 @@ class Player(pygame.sprite.Sprite):
         self.rect = self.image.get_frect(center=(WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2))
         self.direction = pygame.Vector2()
         self.speed = 500
-
         self.canShoot = True
         self.laserShootTime = 0
         self.cooldownDuration = 400
-
         self.mask = pygame.mask.from_surface(self.image)
+        self.score = 0
 
     def laserTimer(self):
         if not self.canShoot:
@@ -111,38 +110,78 @@ def collisions():
             AnimatedExplosion(allSprites, explosionFrames, laser.rect.midtop)
 
 def displayScore():
-    score = pygame.time.get_ticks() // 20
-    textSurface = font.render(str(score), True, "#c8c8c8")
+    player.score = pygame.time.get_ticks() // 20
+    textSurface = font.render(str(player.score), True, "#c8c8c8")
     textRect = textSurface.get_frect(midbottom=(WINDOW_WIDTH / 2, WINDOW_HEIGHT - 50))
     pygame.draw.rect(displaySurface, "#fafafa", textRect.inflate(20, 10).move(0, -8), 5, 10)
     displaySurface.blit(textSurface, textRect)
 
 def gameOver():
     global running
+    printLeaderboard()
     gameOverSurface = font.render("GAME OVER!", True, "#ff0000")
     gameOverRect = gameOverSurface.get_frect(center=(WINDOW_WIDTH / 2, 150))
     pygame.draw.rect(displaySurface, "#ffffff", gameOverRect.inflate(200, 450).move(0, 180), 3, 10)
     displaySurface.blit(gameOverSurface, gameOverRect)
-    printLeaderboard()
     for event in pygame.event.get():
         if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
             running = False
 
 def printLeaderboard():
+    global updatedLeaderboard
+    if not updatedLeaderboard:
+        updateLeaderboard()
+        updatedLeaderboard = True    
     leaderboardSurface = font.render("LEADERBOARD:", True, "#ff0000")
-    leaderboardRect = leaderboardSurface.get_frect(center=(WINDOW_WIDTH / 2, 240))
+    leaderboardRect = leaderboardSurface.get_frect(center=(WINDOW_WIDTH / 2, 230))
     displaySurface.blit(leaderboardSurface, leaderboardRect)
     with open(join("leaderboard.csv"), newline="") as leaderboardFile:
         reader = csv.reader(leaderboardFile)
-        i = 0
+        i = 1
         leaderboardMargin = 0
         for data in reader:
             leaderboardMargin += 30
-            userSurface = smallerFont.render(f"#{i + 1}. {data[0]} - {data[1]}", True, "#ffffff")
+            userSurface = smallerFont.render(f"#{i}. {data[0]} - {data[1]}", True, "#ffffff")
             userRect = userSurface.get_frect(center=(WINDOW_WIDTH / 2, 250 + leaderboardMargin))
             i += 1
             displaySurface.blit(userSurface, userRect)
-        
+
+def updateLeaderboard():
+    nameInputSurface = smallerFont.render("name:", True, "#c8c8c8")
+    nameInputRect = nameInputSurface.get_frect(center=(100, 100))
+    displaySurface.blit(nameInputSurface, nameInputRect)
+    with open(join("leaderboard.csv"), newline="") as leaderboardFile:
+        reader = csv.reader(leaderboardFile)
+        playerName = ""
+        name = ""
+        leadersName = []
+        leadersScore = []
+        updated = False
+        i = 0
+        while not playerName:
+            for event in pygame.event.get():
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_RETURN:
+                        playerName = name
+                    if event.key == pygame.K_BACKSPACE:
+                        name = name[:-1]
+                    name += event.unicode
+        for data in reader:
+            leadersName.append(data[0])
+            leadersScore.append(int(data[1]))
+        for score in leadersScore:
+            if not updated and player.score > score:
+                leadersName.insert(i, playerName)
+                leadersName.pop(10)
+                leadersScore.insert(i, player.score)
+                leadersScore.pop(10)
+                updated = True
+            i += 1
+    with open(join("leaderboard.csv"), "w", newline="") as leaderboardFile:
+        writer = csv.writer(leaderboardFile)
+        for i in range(10):
+            writer.writerow([leadersName[i], leadersScore[i]])
+
 pygame.init()
 WINDOW_WIDTH, WINDOW_HEIGHT = 1280, 720
 displaySurface = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
@@ -150,6 +189,7 @@ pygame.display.set_caption("Space Shooter")
 clock = pygame.time.Clock()
 running = True
 pause = False
+updatedLeaderboard = False
 gameFPS = 60
 
 starSurface = pygame.image.load(join("spaceShooterResources", "images", "star.png")).convert_alpha()
