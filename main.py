@@ -94,16 +94,12 @@ class AnimatedExplosion(pygame.sprite.Sprite):
         else:
             self.kill()
 
-class User():
-    def __init__(self, surface, rect):
-        self.surface = surface
-        self.rect = rect
-
 def collisions():
-    global pause
+    global gameOver
     if pygame.sprite.spritecollide(player, meteorSprites, True, pygame.sprite.collide_mask):
-        player.kill()
-        pause = True
+        allSprites.empty()
+        pygame.time.set_timer(meteorEvent, 0)
+        gameOver = True
     for laser in laserSprites:
         if pygame.sprite.spritecollide(laser, meteorSprites, True):
             laser.kill()
@@ -116,25 +112,7 @@ def displayScore():
     pygame.draw.rect(displaySurface, "#fafafa", textRect.inflate(20, 10).move(0, -8), 5, 10)
     displaySurface.blit(textSurface, textRect)
 
-def gameOver():
-    global running
-    printLeaderboard()
-    gameOverSurface = font.render("GAME OVER!", True, "#ff0000")
-    gameOverRect = gameOverSurface.get_frect(center=(WINDOW_WIDTH / 2, 150))
-    pygame.draw.rect(displaySurface, "#ffffff", gameOverRect.inflate(200, 450).move(0, 180), 3, 10)
-    displaySurface.blit(gameOverSurface, gameOverRect)
-    for event in pygame.event.get():
-        if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-            running = False
-
 def printLeaderboard():
-    global updatedLeaderboard
-    if not updatedLeaderboard:
-        updateLeaderboard()
-        updatedLeaderboard = True    
-    leaderboardSurface = font.render("LEADERBOARD:", True, "#ff0000")
-    leaderboardRect = leaderboardSurface.get_frect(center=(WINDOW_WIDTH / 2, 230))
-    displaySurface.blit(leaderboardSurface, leaderboardRect)
     with open(join("leaderboard.csv"), newline="") as leaderboardFile:
         reader = csv.reader(leaderboardFile)
         i = 1
@@ -146,32 +124,19 @@ def printLeaderboard():
             i += 1
             displaySurface.blit(userSurface, userRect)
 
-def updateLeaderboard():
-    nameInputSurface = smallerFont.render("name:", True, "#c8c8c8")
-    nameInputRect = nameInputSurface.get_frect(center=(100, 100))
-    displaySurface.blit(nameInputSurface, nameInputRect)
+def updateLeaderboard(playerName):
     with open(join("leaderboard.csv"), newline="") as leaderboardFile:
         reader = csv.reader(leaderboardFile)
-        playerName = ""
-        name = ""
         leadersName = []
         leadersScore = []
         updated = False
         i = 0
-        while not playerName:
-            for event in pygame.event.get():
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_RETURN:
-                        playerName = name
-                    if event.key == pygame.K_BACKSPACE:
-                        name = name[:-1]
-                    name += event.unicode
         for data in reader:
             leadersName.append(data[0])
             leadersScore.append(int(data[1]))
         for score in leadersScore:
             if not updated and player.score > score:
-                leadersName.insert(i, playerName)
+                leadersName.insert(i, str(playerName))
                 leadersName.pop(10)
                 leadersScore.insert(i, player.score)
                 leadersScore.pop(10)
@@ -188,8 +153,7 @@ displaySurface = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
 pygame.display.set_caption("Space Shooter")
 clock = pygame.time.Clock()
 running = True
-pause = False
-updatedLeaderboard = False
+gameOver = False
 gameFPS = 60
 
 starSurface = pygame.image.load(join("spaceShooterResources", "images", "star.png")).convert_alpha()
@@ -198,13 +162,17 @@ laserSurface = pygame.image.load(join("spaceShooterResources", "images", "laser.
 font = pygame.font.Font(join("spaceShooterResources", "images", "Oxanium-Bold.ttf"), 40)
 smallerFont = pygame.font.Font(join("spaceShooterResources", "images", "Oxanium-Bold.ttf"), 25)
 explosionFrames = [pygame.image.load(join("spaceShooterResources", "images", "explosion", f"{i}.png")).convert_alpha() for i in range(21)]
+gameOverSurface = font.render("GAME OVER!", True, "#ff0000")
+gameOverRect = gameOverSurface.get_frect(center=(WINDOW_WIDTH / 2, 150))
+leaderboardSurface = font.render("LEADERBOARD:", True, "#ff0000")
+leaderboardRect = leaderboardSurface.get_frect(center=(WINDOW_WIDTH / 2, 220))
 
 laserSound = pygame.mixer.Sound(join("spaceShooterResources", "audio", "laser.wav"))
 laserSound.set_volume(0.2)
 explosionSound = pygame.mixer.Sound(join("spaceShooterResources", "audio", "explosion.wav"))
 explosionSound.set_volume(0.2)
 gameMusic = pygame.mixer.Sound(join("spaceShooterResources", "audio", "game_music.wav"))
-gameMusic.set_volume(0.2)
+gameMusic.set_volume(0)
 gameMusic.play(loops=-1)
 
 allSprites = pygame.sprite.Group()
@@ -218,24 +186,49 @@ meteorEvent = pygame.event.custom_type()
 pygame.time.set_timer(meteorEvent, 500)
 
 while running:
-    while not pause:
-        dt = clock.tick(gameFPS) / 1000
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
-            if event.type == meteorEvent:
-                Meteor((allSprites, meteorSprites), meteorSurface, (randint(0, WINDOW_WIDTH), randint(-150, -50)))
+    dt = clock.tick(gameFPS) / 1000
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+        if event.type == meteorEvent:
+            Meteor((allSprites, meteorSprites), meteorSurface, (randint(0, WINDOW_WIDTH), randint(-150, -50)))
         
-        allSprites.update(dt)
-        collisions()
+    allSprites.update(dt)
+    collisions()
 
-        displaySurface.fill("#3e005a")
-        allSprites.draw(displaySurface)
-        displayScore()
-
-        pygame.display.flip()
-
-    gameOver()
+    displaySurface.fill("#3e005a")
+    allSprites.draw(displaySurface)
+    displayScore()
+    if gameOver:
+        inputtingName = True
+        playerName = ""
+        while inputtingName:
+            for event in pygame.event.get():
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_RETURN:
+                        inputtingName = False
+                    if event.key == pygame.K_BACKSPACE:
+                        playerName = playerName[:-1]
+                    else:
+                        playerName += event.unicode
+            nameSurface = font.render("name: ", True, "#c8c8c8")
+            playerNameSurface = smallerFont.render(playerName, True, ("#ffffff"))
+            displaySurface.blit(nameSurface, (100, 100))
+            displaySurface.blit(playerNameSurface, (100, 150))
+            pygame.display.flip()
+        updateLeaderboard(playerName)
+        leaderboard = True
+        while leaderboard:
+            for event in pygame.event.get():
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_RETURN or event.key == pygame.K_ESCAPE:
+                        leaderboard = False
+                        running = False  
+            displaySurface.blit(gameOverSurface, gameOverRect)
+            displaySurface.blit(leaderboardSurface, leaderboardRect)
+            pygame.draw.rect(displaySurface, "#ff0000", pygame.Rect(WINDOW_WIDTH / 2 - 200, 80, 400, 520), 3, 10)
+            printLeaderboard()
+            pygame.display.flip()
     pygame.display.flip()
 
 pygame.quit()
